@@ -3,11 +3,11 @@ from llama_index.core import SimpleDirectoryReader
 from llama_index.core.indices import MultiModalVectorStoreIndex
 from llama_index.llms.openai_like import OpenAILike
 from llama_index.llms.openai import OpenAI
-from llama_index.llms.dashscope import DashScope
 from llama_index.embeddings.clip import ClipEmbedding
 
-# 1. 设置 API Key (或者在环境变量中设置)
-os.environ["OPENAI_API_KEY"] = "sk-7RQMk5JJvBU94F9RzdLB7Le3YXVlQbxBZjMEmLUPBBrxfu7u" 
+# 1. 设置 API Key
+if not os.environ["OPENAI_API_KEY"].startswith("sk-"):
+    print("请设置环境变量!!!")
 
 print("正在初始化模型...")
 
@@ -15,11 +15,11 @@ print("正在初始化模型...")
 # 使用 CLIP 将图片变成向量，用于检索
 embed_model = ClipEmbedding(model_name="ViT-L/14")
 
-# 使用 GPT-4o 理解图片和回答问题
-openai_mm_llm = OpenAI(
-    model_name="gpt-4o-mini", 
-    api_base="https://www.dmxapi.cn/v1",
-    api_key=os.environ["OPENAI_API_KEY"], 
+# 使用 Qwen3-VL-Plus 理解图片和回答问题
+openai_mm_llm = OpenAILike(
+    model_name="qwen3-vl-plus", 
+    is_chat_model=True,
+    is_function_calling_model=True
 )
 
 # 3. 加载数据

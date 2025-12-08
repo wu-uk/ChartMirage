@@ -6,32 +6,30 @@
 
 ## ChartMirage (中文)
 
-ChartMirage 是一个专注于生成和评估对抗性（投毒）图表的项目，旨在测试多模态大语言模型（MLLMs）在图表理解和事实核查方面的鲁棒性。
+ChartMirage 是一个专注于评估多模态大语言模型（MLLMs）在图表理解方面鲁棒性的项目。本项目采用先进的**多模态 RAG (Retrieval-Augmented Generation)** 架构，旨在探索模型在面对对抗性或复杂图表数据时的检索与推理能力。
 
-该项目通过生成成对的“干净”图表和“投毒”图表（数据或趋势被篡改），并结合针对性的问答对，来模拟图表数据被操纵或误导的场景，从而评估模型是否能够正确识别视觉信息中的差异。
+### 核心架构 (RAG Framework)
 
-### 核心架构
+本项目基于 **LlamaIndex** 构建多模态 RAG 流程，底层原理分为三个核心阶段：**索引（Indexing）**、**检索（Retrieval）** 和 **生成（Generation）**。
 
-项目主要包含以下几个部分：
+| 组件 | 实现技术/模型 | 作用 |
+| :--- | :--- | :--- |
+| **框架 (Framework)** | `LlamaIndex` | 负责编排整个 RAG 流程（数据加载、索引构建、检索、提示词组装）。 |
+| **索引结构 (Index)** | `MultiModalVectorStoreIndex` | 专门用于存储和管理多模态数据（图片+文本）的向量索引。 |
+| **嵌入模型 (Embedding)** | `ClipEmbedding` (ViT-L/14) | **检索核心**。将图片和文本映射到同一个高维向量空间，通过计算 Query 向量与图片向量的余弦相似度来实现语义检索。 |
+| **生成模型 (LLM)** | `Qwen3-VL-Plus` | 多模态大模型。它不仅能处理文本，还能直接“看”懂检索到的图片（Visual Token），并结合上下文回答用户问题。 |
 
-1.  **数据生成 (Data Generation)**:
-    -   核心脚本 `generate_charts.py` 使用 Matplotlib 生成合成图表。
-    -   它会生成两组图表：
-        -   **Clean (干净版)**: 展示真实、正确的数据趋势。
-        -   **Poisoned (投毒版)**: 对数据、趋势或标签进行特定篡改（例如反转趋势、修改极值），旨在误导模型。
+#### 工作流原理
 
-2.  **数据集 (Dataset)**:
-    -   `dataset/` 目录包含用于评估的图像和元数据。
-    -   `final_qa_merged_unified.json` 包含了图像路径、原始描述 (caption)、篡改后的描述 (fake_caption)、查询问题 (query) 以及对应的真实答案和误导性答案。
-
-3.  **评估 (Evaluation)**:
-    -   项目包含利用 LlamaIndex 等工具对接多模态模型（如 Qwen-VL）的测试脚本（如 `tmp/test_llm.py`），用于验证模型对生成图表的理解能力。
+1.  **索引构建**: 使用 `SimpleDirectoryReader` 加载数据集中的图表，通过 **CLIP** 视觉编码器将图片转换为向量并存储。
+2.  **语义检索**: 当用户提出问题时，系统将文本 Query 转换为向量，在库中检索出语义最相关的图表（Top-K）。
+3.  **多模态生成**: 将用户的文本问题与检索到的图表一起输入给 **Qwen-VL**，模型结合视觉信息与文本指令生成最终回答。
 
 ### 快速开始 (Quick Start)
 
 #### 1. 环境准备
 
-首先，克隆代码仓库并安装依赖。建议使用 Conda 管理环境。
+克隆代码仓库并安装依赖。建议使用 Conda 管理环境。
 
 ```bash
 # 克隆项目
@@ -43,28 +41,42 @@ conda env create -f environment.yml
 conda activate ChartMirage
 ```
 
+#### 2. 配置 API Key
+
+项目依赖 OpenAI 格式的 API 接口（如 Qwen-VL 通过 DashScope 提供的兼容接口）。请确保在环境变量中设置了 `OPENAI_API_KEY`。
+
+#### 3. 运行 RAG 演示
+
+使用提供的测试脚本运行多模态 RAG 流程：
+
+```bash
+python test.py
+```
+
+该脚本将演示如何加载图表数据、构建多模态索引，并针对特定问题（如销售趋势）进行检索和问答。
+
+---
+
 ## ChartMirage (English)
 
-ChartMirage is a project dedicated to generating and evaluating adversarial (poisoned) charts to test the robustness and fact-checking capabilities of Multi-modal Large Language Models (MLLMs).
+ChartMirage is a project dedicated to evaluating the robustness of Multi-modal Large Language Models (MLLMs) in chart understanding. It utilizes an advanced **Multi-modal RAG (Retrieval-Augmented Generation)** architecture to explore model performance in retrieval and reasoning tasks when facing adversarial or complex chart data.
 
-By generating pairs of "clean" and "poisoned" charts (where data or trends are manipulated) along with targeted QA pairs, the project simulates scenarios where chart data is manipulated or misleading, evaluating whether models can correctly identify discrepancies in visual information.
+### Architecture (RAG Framework)
 
-### Architecture
+The project is built upon **LlamaIndex** to orchestrate the Multi-modal RAG pipeline, consisting of three core stages: **Indexing**, **Retrieval**, and **Generation**.
 
-The project consists of the following main components:
+| Component | Implementation/Model | Function |
+| :--- | :--- | :--- |
+| **Framework** | `LlamaIndex` | Orchestrates the RAG pipeline (data loading, indexing, retrieval, prompt assembly). |
+| **Index Structure** | `MultiModalVectorStoreIndex` | Vector index designed for storing and managing multi-modal data (images + text). |
+| **Embedding** | `ClipEmbedding` (ViT-L/14) | **Retrieval Core**. Maps images and text to the same high-dimensional vector space, enabling semantic retrieval via cosine similarity between Query and Image vectors. |
+| **Generation (LLM)** | `Qwen3-VL-Plus` | Multi-modal LLM. It processes both text and retrieved images (Visual Tokens) directly to generate context-aware answers. |
 
-1.  **Data Generation**:
-    -   The core script `generate_charts.py` uses Matplotlib to generate synthetic charts.
-    -   It produces pairs of charts:
-        -   **Clean**: Displays correct data trends.
-        -   **Poisoned**: Specific manipulations to data, trends, or labels (e.g., reversing trends, modifying extremes) designed to mislead models.
+#### Workflow
 
-2.  **Dataset**:
-    -   The `dataset/` directory contains images and metadata for evaluation.
-    -   `final_qa_merged_unified.json` links image paths, original captions, fake captions, queries, and corresponding true/fake answers.
-
-3.  **Evaluation**:
-    -   Includes scripts (e.g., `tmp/test_llm.py`) utilizing tools like LlamaIndex to interface with multi-modal models (e.g., Qwen-VL) for validating model understanding of the generated charts.
+1.  **Indexing**: Loads charts from the dataset using `SimpleDirectoryReader`, converts images into vectors using the **CLIP** visual encoder, and stores them.
+2.  **Semantic Retrieval**: Converts the user's text query into a vector and retrieves the most semantically relevant charts (Top-K) from the index.
+3.  **Multi-modal Generation**: Feeds both the user query and the retrieved charts into **Qwen-VL**, which generates the final answer by combining visual information with text instructions.
 
 ### Quick Start
 
@@ -81,3 +93,17 @@ cd ChartMirage
 conda env create -f environment.yml
 conda activate ChartMirage
 ```
+
+#### 2. Configure API Key
+
+The project relies on OpenAI-compatible APIs (e.g., Qwen-VL via DashScope). Ensure `OPENAI_API_KEY` is set in your environment variables.
+
+#### 3. Run RAG Demo
+
+Run the test script to demonstrate the multi-modal RAG pipeline:
+
+```bash
+python test.py
+```
+
+This script demonstrates how to load chart data, build a multi-modal index, and perform retrieval and QA on specific queries (e.g., sales trends).

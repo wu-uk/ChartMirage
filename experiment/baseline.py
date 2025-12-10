@@ -75,8 +75,11 @@ for entry in data:
     if img_abs_path not in image_map:
         doc = ImageDocument(
             image_path=img_abs_path,
-            text=entry["original_caption"], # Using unmodified caption
-            metadata={"file_name": os.path.basename(img_abs_path)}
+            text=entry["original_caption"],
+            metadata={
+                "file_name": os.path.basename(img_abs_path),
+                "image_path": img_abs_path
+            }
         )
         image_map[img_abs_path] = doc
         documents.append(doc)
@@ -159,12 +162,20 @@ def process_query(entry, idx):
     try:
         response = retriever_engine.query(query)
         
-        # Check Retrieval
+        # Check Retrieval (include both image and text)
         retrieved_img = "None"
+        retrieved_img_path = None
+        retrieved_text = ""
         score = 0.0
         if response.source_nodes:
             node = response.source_nodes[0]
             retrieved_img = node.metadata.get("file_name", "Unknown")
+            retrieved_img_path = node.metadata.get("image_path")
+            # Try to extract text content from node
+            try:
+                retrieved_text = getattr(node.node, "text", "") or getattr(node, "text", "")
+            except Exception:
+                retrieved_text = ""
             score = node.score
         
         is_retrieval_correct = (retrieved_img == target_img_name)
@@ -178,6 +189,8 @@ def process_query(entry, idx):
             "query": query,
             "target_image": target_img_name,
             "retrieved_image": retrieved_img,
+            "retrieved_image_path": retrieved_img_path,
+            "retrieved_text": retrieved_text,
             "retrieval_score": score,
             "retrieval_success": is_retrieval_correct,
             "ground_truth": ground_truth,
@@ -208,7 +221,7 @@ print("\n--- Starting Baseline Experiment (Multi-threaded) ---")
 # Adjust max_workers based on your API rate limits
 results = []
 max_workers = 8
-limit_entries = len(data) # Set a limit for testing, or use len(data) for full run
+limit_entries = 8 # Set a limit for testing, or use len(data) for full run
 
 with concurrent.futures.ThreadPoolExecutor(max_workers=max_workers) as executor:
     # Submit tasks

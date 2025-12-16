@@ -1,5 +1,8 @@
 from llama_index.core.llms import ChatMessage, TextBlock, ImageBlock
 from llama_index.llms.openai_like import OpenAILike
+from dotenv import load_dotenv
+
+load_dotenv()
 
 llm = OpenAILike(
     model="qwen3-vl-plus",
@@ -11,7 +14,7 @@ messages = [
     ChatMessage(
         role="user",
         blocks=[
-            ImageBlock(path=r"data_charts_gen\01_sales_trend_poisoned.png"),
+            ImageBlock(path="data_charts_gen/01_sales_trend_poisoned.png"),
             TextBlock(text="Describe the image in a few sentences."),
         ],
     )

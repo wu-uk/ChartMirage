@@ -6,104 +6,100 @@
 
 ## ChartMirage (中文)
 
-ChartMirage 是一个专注于评估多模态大语言模型（MLLMs）在图表理解方面鲁棒性的项目。本项目采用先进的**多模态 RAG (Retrieval-Augmented Generation)** 架构，旨在探索模型在面对对抗性或复杂图表数据时的检索与推理能力。
+ChartMirage 是一个专注于评估和提升多模态大语言模型（MLLMs）在图表理解方面鲁棒性的研究项目。本项目通过构建一个带有**多级防御机制的增强型多模态 RAG (Retrieval-Augmented Generation)** 架构，旨在识别并拦截针对图表数据的对抗性攻击。
 
-### 核心架构 (RAG Framework)
+### 核心特性
 
-本项目基于 **LlamaIndex** 构建多模态 RAG 流程，底层原理分为三个核心阶段：**索引（Indexing）**、**检索（Retrieval）** 和 **生成（Generation）**。
+- **多级防御管道 (Defensive RAG Pipeline)**:
+    1.  **完整性校验 (Hash Check)**: 毫秒级拦截被非法篡改的图表。
+    2.  **信号一致性检测 (Signal Consistency)**: 通过特征空间分析识别潜在的对抗样本。
+    3.  **多模态语义审计 (VLM Audit)**: 利用 VLM 的跨模态推理能力对检索结果进行深度审计。
+- **标准化路径管理**: 全局动态路径解析，支持跨环境部署，所有实验结果统一输出至 `outputs/`。
+- **模块化架构**: 核心逻辑、基准测试、实验脚本和数据集清晰分离。
 
-| 组件 | 实现技术/模型 | 作用 |
-| :--- | :--- | :--- |
-| **框架 (Framework)** | `LlamaIndex` | 负责编排整个 RAG 流程（数据加载、索引构建、检索、提示词组装）。 |
-| **索引结构 (Index)** | `MultiModalVectorStoreIndex` | 专门用于存储和管理多模态数据（图片+文本）的向量索引。 |
-| **嵌入模型 (Embedding)** | `ClipEmbedding` (ViT-L/14) | **检索核心**。将图片和文本映射到同一个高维向量空间，通过计算 Query 向量与图片向量的余弦相似度来实现语义检索。 |
-| **生成模型 (LLM)** | `Qwen3-VL-Plus` | 多模态大模型。它不仅能处理文本，还能直接“看”懂检索到的图片（Visual Token），并结合上下文回答用户问题。 |
+### 项目结构
 
-#### 工作流原理
+- [core/](file:///home/ASC26team2/wuyukai/project/ChartMirage/core/): 包含防御管道的核心实现 `defensive_rag_pipeline.py` 及关键实验脚本。
+- [benchmarks/](file:///home/ASC26team2/wuyukai/project/ChartMirage/benchmarks/): 性能评估和对比测试脚本。
+- [dataset/](file:///home/ASC26team2/wuyukai/project/ChartMirage/dataset/): 包含图表图片、问答对、哈希注册表及 OCR 缓存。
+- [tests/](file:///home/ASC26team2/wuyukai/project/ChartMirage/tests/): 各种功能测试和分析工具。
+- [data_charts_gen/](file:///home/ASC26team2/wuyukai/project/ChartMirage/data_charts_gen/): 图表素材与生成相关配置。
 
-1.  **索引构建**: 使用 `SimpleDirectoryReader` 加载数据集中的图表，通过 **CLIP** 视觉编码器将图片转换为向量并存储。
-2.  **语义检索**: 当用户提出问题时，系统将文本 Query 转换为向量，在库中检索出语义最相关的图表（Top-K）。
-3.  **多模态生成**: 将用户的文本问题与检索到的图表一起输入给 **Qwen-VL**，模型结合视觉信息与文本指令生成最终回答。
-
-### 快速开始 (Quick Start)
+### 快速开始
 
 #### 1. 环境准备
 
-克隆代码仓库并安装依赖。建议使用 Conda 管理环境。
+建议使用 Conda 管理环境：
 
 ```bash
-# 克隆项目
-git clone https://github.com/your-username/ChartMirage.git
-cd ChartMirage
-
-# 创建并激活 Conda 环境
 conda env create -f environment.yml
 conda activate ChartMirage
 ```
 
 #### 2. 配置 API Key
 
-项目依赖 OpenAI 格式的 API 接口（如 Qwen-VL 通过 DashScope 提供的兼容接口）。请确保在环境变量中设置了 `OPENAI_API_KEY`。
+在根目录下创建 `.env` 文件（或修改模板），配置您的 API 密钥：
 
-#### 3. 运行 RAG 演示
-
-使用提供的测试脚本运行多模态 RAG 流程：
-
-```bash
-python test.py
+```env
+OPENAI_API_KEY="your_api_key_here"
+OPENAI_API_BASE="https://your_api_endpoint/v1"
 ```
 
-该脚本将演示如何加载图表数据、构建多模态索引，并针对特定问题（如销售趋势）进行检索和问答。
+#### 3. 运行验证
+
+测试防御性 RAG 管道：
+
+```bash
+python benchmarks/verify_defensive_pipeline.py
+```
 
 ---
 
 ## ChartMirage (English)
 
-ChartMirage is a project dedicated to evaluating the robustness of Multi-modal Large Language Models (MLLMs) in chart understanding. It utilizes an advanced **Multi-modal RAG (Retrieval-Augmented Generation)** architecture to explore model performance in retrieval and reasoning tasks when facing adversarial or complex chart data.
+ChartMirage is a research project dedicated to evaluating and enhancing the robustness of Multi-modal Large Language Models (MLLMs) in chart understanding. It features an **Enhanced Multi-modal RAG (Retrieval-Augmented Generation)** architecture with multi-level defense mechanisms designed to detect and intercept adversarial attacks on chart data.
 
-### Architecture (RAG Framework)
+### Key Features
 
-The project is built upon **LlamaIndex** to orchestrate the Multi-modal RAG pipeline, consisting of three core stages: **Indexing**, **Retrieval**, and **Generation**.
+- **Multi-level Defensive Pipeline**:
+    1.  **Integrity Verification (Hash Check)**: Millisecond-level interception of tampered charts.
+    2.  **Signal Consistency Detection**: Identifies potential adversarial samples via feature space analysis.
+    3.  **Semantic Audit (VLM Audit)**: Deeply audits retrieval results using cross-modal reasoning of VLMs.
+- **Standardized Path Management**: Global dynamic path resolution supporting cross-environment deployment, with all outputs centralized in `outputs/`.
+- **Modular Architecture**: Clean separation of core logic, benchmarks, experiments, and datasets.
 
-| Component | Implementation/Model | Function |
-| :--- | :--- | :--- |
-| **Framework** | `LlamaIndex` | Orchestrates the RAG pipeline (data loading, indexing, retrieval, prompt assembly). |
-| **Index Structure** | `MultiModalVectorStoreIndex` | Vector index designed for storing and managing multi-modal data (images + text). |
-| **Embedding** | `ClipEmbedding` (ViT-L/14) | **Retrieval Core**. Maps images and text to the same high-dimensional vector space, enabling semantic retrieval via cosine similarity between Query and Image vectors. |
-| **Generation (LLM)** | `Qwen3-VL-Plus` | Multi-modal LLM. It processes both text and retrieved images (Visual Tokens) directly to generate context-aware answers. |
+### Project Structure
 
-#### Workflow
-
-1.  **Indexing**: Loads charts from the dataset using `SimpleDirectoryReader`, converts images into vectors using the **CLIP** visual encoder, and stores them.
-2.  **Semantic Retrieval**: Converts the user's text query into a vector and retrieves the most semantically relevant charts (Top-K) from the index.
-3.  **Multi-modal Generation**: Feeds both the user query and the retrieved charts into **Qwen-VL**, which generates the final answer by combining visual information with text instructions.
+- [core/](file:///home/ASC26team2/wuyukai/project/ChartMirage/core/): Core implementation of `defensive_rag_pipeline.py` and key experiments.
+- [benchmarks/](file:///home/ASC26team2/wuyukai/project/ChartMirage/benchmarks/): Performance evaluation and comparison scripts.
+- [dataset/](file:///home/ASC26team2/wuyukai/project/ChartMirage/dataset/): Chart images, QA pairs, hash registry, and OCR cache.
+- [tests/](file:///home/ASC26team2/wuyukai/project/ChartMirage/tests/): Functional tests and analysis tools.
+- [data_charts_gen/](file:///home/ASC26team2/wuyukai/project/ChartMirage/data_charts_gen/): Chart assets and generation configurations.
 
 ### Quick Start
 
 #### 1. Prerequisites
 
-Clone the repository and install dependencies. Using Conda is recommended.
+Conda environment is recommended:
 
 ```bash
-# Clone the repository
-git clone https://github.com/your-username/ChartMirage.git
-cd ChartMirage
-
-# Create and activate Conda environment
 conda env create -f environment.yml
 conda activate ChartMirage
 ```
 
 #### 2. Configure API Key
 
-The project relies on OpenAI-compatible APIs (e.g., Qwen-VL via DashScope). Ensure `OPENAI_API_KEY` is set in your environment variables.
+Create a `.env` file in the root directory and set your API key:
 
-#### 3. Run RAG Demo
-
-Run the test script to demonstrate the multi-modal RAG pipeline:
-
-```bash
-python test.py
+```env
+OPENAI_API_KEY="your_api_key_here"
+OPENAI_API_BASE="https://your_api_endpoint/v1"
 ```
 
-This script demonstrates how to load chart data, build a multi-modal index, and perform retrieval and QA on specific queries (e.g., sales trends).
+#### 3. Run Verification
+
+Test the defensive RAG pipeline:
+
+```bash
+python benchmarks/verify_defensive_pipeline.py
+```

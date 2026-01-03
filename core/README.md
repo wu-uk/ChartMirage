@@ -22,5 +22,12 @@
 ### 哈希校验
 通过预先计算合法图表的哈希值并存储在 `hash_registry.json` 中，在检索阶段实时比对，确保加载的图表未被篡改。
 
-### 语义审计
-利用 VLM 的多模态理解能力，对检索到的图表进行二次确认，检测其内容是否与用户查询存在逻辑冲突或恶意诱导。
+### 环境适配建议
+
+在某些环境下，PaddleOCR 可能无法正确加载 CUDA 相关的动态库（如 `libnvrtc.so`）。[defensive_rag_pipeline.py](file:///home/ASC26team2/wuyukai/project/ChartMirage/core/defensive_rag_pipeline.py) 中包含了一段硬编码的 `nvidia_lib_path` 用于修复此问题：
+
+```python
+nvidia_lib_path = '/home/ASC26team2/miniconda3/envs/ChartMirage/lib/python3.12/site-packages/nvidia/cu13/lib'
+```
+
+**注意**：如果您在其他机器或环境下运行，请根据实际的 Conda 环境路径修改此变量，或者确保系统 `LD_LIBRARY_PATH` 已包含正确的 NVIDIA 库路径。

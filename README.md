@@ -53,6 +53,12 @@ OPENAI_API_BASE="https://your_api_endpoint/v1"
 python benchmarks/verify_defensive_pipeline.py
 ```
 
+#### 4. 注意事项 (Environment Note)
+
+由于环境依赖（如 PaddleOCR 与 CUDA 库的兼容性），[defensive_rag_pipeline.py](file:///home/ASC26team2/wuyukai/project/ChartMirage/core/defensive_rag_pipeline.py) 中包含一段用于加载 CUDA 库的硬编码路径。
+
+**若遇到 CUDA 库加载错误**，请检查并修改 `core/defensive_rag_pipeline.py` 中的 `nvidia_lib_path` 变量，确保其指向您当前 Conda 环境下的 NVIDIA 库目录。详情请参考 [core/README.md](file:///home/ASC26team2/wuyukai/project/ChartMirage/core/README.md)。
+
 ---
 
 ## ChartMirage (English)
@@ -103,3 +109,9 @@ Test the defensive RAG pipeline:
 ```bash
 python benchmarks/verify_defensive_pipeline.py
 ```
+
+#### 4. Environment Note
+
+Due to environment dependencies (e.g., compatibility between PaddleOCR and CUDA libraries), [defensive_rag_pipeline.py](file:///home/ASC26team2/wuyukai/project/ChartMirage/core/defensive_rag_pipeline.py) contains a hardcoded path for loading CUDA libraries.
+
+**If you encounter CUDA library loading errors**, please check and modify the `nvidia_lib_path` variable in `core/defensive_rag_pipeline.py` to point to the NVIDIA library directory in your current Conda environment. For more details, see [core/README.md](file:///home/ASC26team2/wuyukai/project/ChartMirage/core/README.md).

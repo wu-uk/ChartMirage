@@ -19,9 +19,18 @@ ENV/
 .DS_Store
 
 # Project Data & Outputs
-storage/
+storage*/
 outputs/
 tmp/
+*.zip
+
+# Dataset Images (Too large for standard Git)
+dataset/images_merged/
+dataset/images_merged_fake/
+dataset/images_noise_fake/
 
 # Logs
 *.log
+
+# Models
+core/experiments/consistency_check/*.pth
